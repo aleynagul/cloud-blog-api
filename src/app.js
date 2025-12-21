@@ -1,19 +1,19 @@
 import express from 'express';
-import authRouters from './routes/auth.routes.js';
-import postRouters from './routes/post.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import postRoutes from './routes/post.routes.js';
 
 const app = express();
 
-//middleware
+// Middleware
 app.use(express.json());
 
-//test endpoit
-app.get('/',(req,res) => {
-    res.send('Blog api çalışıyor.');
+// Test endpoint
+app.get('/', (req, res) => {
+  res.send('Secure Cloud Blog API çalışıyor 🚀');
 });
 
-//routers
-app.use('/auth',authRouters);
-app.use('/post',postRouters);
+// Routes
+app.use('/auth', authRoutes);
+app.use('/posts', postRoutes);
 
 export default app;

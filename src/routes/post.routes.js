@@ -3,6 +3,7 @@ import { authenticateToken } from '../middleware/auth.middleware.js';
 import { getCache, setCache, clearCache } from '../services/cache.service.js';
 
 const router = Router();
+const POSTS_CACHE_KEY = 'posts';
 
 // In-memory db
 let posts = [
@@ -11,20 +12,20 @@ let posts = [
 
 router.get('/', authenticateToken, (req, res) => {
   try {
-    const cached = getCache('posts');
+    const cached = getCache(POSTS_CACHE_KEY);
 
     if (cached) {
       return res.json({
         source: 'cache',
-        data: cached
+        data: [...cached]
       });
     }
 
-    setCache('posts', posts);
+    setCache(POSTS_CACHE_KEY, [...posts]);
 
     res.json({
       source: 'database',
-      data: posts
+      data: [...posts]
     });
   } catch (err) {
     console.error('GET /posts error:', err);
@@ -47,7 +48,7 @@ router.post('/', authenticateToken, (req, res) => {
     };
 
     posts.push(newPost);
-    clearCache('posts');
+    clearCache(POSTS_CACHE_KEY);
 
     res.status(201).json(newPost);
   } catch (err) {
@@ -69,7 +70,7 @@ router.put('/:id', authenticateToken, (req, res) => {
     if (title) post.title = title;
     if (content) post.content = content;
 
-    clearCache('posts');
+    clearCache(POSTS_CACHE_KEY);
     res.json(post);
   } catch (err) {
     console.error('PUT /posts error:', err);
@@ -82,7 +83,7 @@ router.delete('/:id', authenticateToken, (req, res) => {
     const id = Number(req.params.id);
     posts = posts.filter(p => p.id !== id);
 
-    clearCache('posts');
+    clearCache(POSTS_CACHE_KEY);
     res.json({ message: 'Post silindi' });
   } catch (err) {
     console.error('DELETE /posts error:', err);

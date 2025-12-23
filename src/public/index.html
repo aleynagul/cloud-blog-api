@@ -58,115 +58,117 @@
         <button onclick="logout()">Çıkış Yap</button>
     </section>
 
-    <script>
-        let token = "";
-        const API_URL = "http://localhost:5006";
+  <script>
+  let token = "";
 
-        async function login() {
-            const res = await fetch(`${API_URL}/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: username.value,
-                    password: password.value
-                })
-            });
+  async function login() {
+    const res = await fetch('/auth/login', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value
+      })
+    });
 
-            if (!res.ok) {
-                loginError.textContent = "Giriş başarısız";
-                return;
-            }
+    if (!res.ok) {
+      loginError.textContent = "Giriş başarısız";
+      return;
+    }
 
-            const data = await res.json();
-            token = data.token;
+    const data = await res.json();
+    token = data.token;
 
-            loginSection.classList.add("hidden");
-            postsSection.classList.remove("hidden");
+    loginSection.classList.add("hidden");
+    postsSection.classList.remove("hidden");
 
-            getPosts();
-        }
-        async function getPosts() {
-            const res = await fetch(`${API_URL}/posts`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+    getPosts();
+  }
 
-            const result = await res.json();
-            postsList.innerHTML = "";
+  async function register() {
+    const res = await fetch('/auth/register', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value
+      })
+    });
 
-            result.data.forEach(p => {
-                const div = document.createElement("div");
-                div.className = "post";
+    const data = await res.json();
 
-                div.innerHTML = `<strong>${p.title}</strong> <p>${p.content}</p> <button onclick="deletePost(${p.id})">Sil</button>`;
+    if (res.ok) {
+      authMessage.style.color = "green";
+      authMessage.textContent = "Kayıt başarılı, giriş yapabilirsin.";
+    } else {
+      authMessage.style.color = "red";
+      authMessage.textContent = data.message;
+    }
+  }
 
-                postsList.appendChild(div);
-            });
-        }
+  async function getPosts() {
+    const res = await fetch('/posts', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-        async function deletePost(id) {
-            await fetch(`${API_URL}/posts/${id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+    const result = await res.json();
+    postsList.innerHTML = "";
 
-            getPosts();
-        }
+    result.data.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "post";
+      div.innerHTML = `
+        <strong>${p.title}</strong>
+        <p>${p.content}</p>
+        <button onclick="deletePost(${p.id})">Sil</button>
+      `;
+      postsList.appendChild(div);
+    });
+  }
 
-        async function addPost() {
-            await fetch(`${API_URL}/posts`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    title: title.value,
-                    content: content.value
-                })
-            });
+  async function addPost() {
+    await fetch('/posts', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title: title.value,
+        content: content.value
+      })
+    });
 
-            title.value = "";
-            content.value = "";
+    title.value = "";
+    content.value = "";
 
-            getPosts();
-        }
-        function logout() {
-            token = "";
+    getPosts();
+  }
 
-            postsSection.classList.add("hidden");
-            loginSection.classList.remove("hidden");
+  async function deletePost(id) {
+    await fetch(`/posts/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-            authMessage.textContent = "";
-        }
+    getPosts();
+  }
 
+  function logout() {
+    token = "";
 
+    postsSection.classList.add("hidden");
+    loginSection.classList.remove("hidden");
 
-        async function register() {
-            const res = await fetch(`${API_URL}/auth/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: username.value,
-                    password: password.value
-                })
-            });
+    authMessage.textContent = "";
+    loginError.textContent = "";
+  }
+</script>
 
-            const data = await res.json();
-
-            if (res.ok) {
-                registerMsg.style.color = "green";
-                registerMsg.textContent = "Kayıt başarılı, giriş yapabilirsin.";
-            } else {
-                registerMsg.style.color = "red";
-                registerMsg.textContent = data.message;
-            }
-        }
-
-    </script>
 
 </body>
 

@@ -1,15 +1,11 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js';
 import { getCache, setCache, clearCache } from '../services/cache.service.js';
+import { getAllPosts,addPost,updatePost,deletePost} from '../data/posts.data.js';
 
 const router = Router();
 
-// In-memory db
-let posts = [
-  { id: 1, title: 'İlk Post', content: 'Merhaba Blog!', owner: 'aley' }
-];
-
-// Get post, sadece kendi postları
+//get sadece giriş yapan kullanıcının postlarını getirir
 router.get('/', authenticateToken, (req, res) => {
   try {
     const cacheKey = `posts_${req.user.username}`;
@@ -22,7 +18,8 @@ router.get('/', authenticateToken, (req, res) => {
       });
     }
 
-    const userPosts = posts.filter(
+    const allPosts = getAllPosts();
+    const userPosts = allPosts.filter(
       p => p.owner === req.user.username
     );
 
@@ -39,7 +36,7 @@ router.get('/', authenticateToken, (req, res) => {
   }
 });
 
-// create post
+//post sadece kendine yeni post oluşturur 
 router.post('/', authenticateToken, (req, res) => {
   try {
     const { title, content } = req.body;
@@ -48,16 +45,16 @@ router.post('/', authenticateToken, (req, res) => {
       return res.status(400).json({ message: 'Title ve content zorunlu' });
     }
 
+    const allPosts = getAllPosts();
+
     const newPost = {
-      id: posts.length + 1,
+      id: allPosts.length + 1,
       title,
       content,
       owner: req.user.username
     };
 
-    posts.push(newPost);
-
-    // sadece bu kullanıcının cache'ini temizle
+    addPost(newPost);
     clearCache(`posts_${req.user.username}`);
 
     res.status(201).json(newPost);
@@ -68,13 +65,14 @@ router.post('/', authenticateToken, (req, res) => {
   }
 });
 
-// Update post ,sadece kendi postunu
+// put sadece kendi postunu günceller 
 router.put('/:id', authenticateToken, (req, res) => {
   try {
     const id = Number(req.params.id);
     const { title, content } = req.body;
 
-    const post = posts.find(
+    const allPosts = getAllPosts();
+    const post = allPosts.find(
       p => p.id === id && p.owner === req.user.username
     );
 
@@ -85,7 +83,9 @@ router.put('/:id', authenticateToken, (req, res) => {
     if (title) post.title = title;
     if (content) post.content = content;
 
+    updatePost(post);
     clearCache(`posts_${req.user.username}`);
+
     res.json(post);
 
   } catch (err) {
@@ -94,12 +94,13 @@ router.put('/:id', authenticateToken, (req, res) => {
   }
 });
 
-// delete post, sadece kendi postunu
+//delete post sadece kendi postunu siler
 router.delete('/:id', authenticateToken, (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const post = posts.find(
+    const allPosts = getAllPosts();
+    const post = allPosts.find(
       p => p.id === id && p.owner === req.user.username
     );
 
@@ -107,9 +108,9 @@ router.delete('/:id', authenticateToken, (req, res) => {
       return res.status(404).json({ message: 'Post bulunamadı' });
     }
 
-    posts = posts.filter(p => p.id !== id);
-
+    deletePost(id);
     clearCache(`posts_${req.user.username}`);
+
     res.json({ message: 'Post silindi' });
 
   } catch (err) {

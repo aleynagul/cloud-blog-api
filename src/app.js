@@ -3,6 +3,8 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import postRoutes from './routes/post.routes.js';
 import path from 'path';
+
+
 import { fileURLToPath } from 'url';
 
 const app = express();

@@ -1,120 +1,173 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Mini Blog UI</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      max-width: 600px;
-      margin: auto;
-    }
-    input, textarea, button {
-      display: block;
-      margin: 8px 0;
-      width: 100%;
-      padding: 8px;
-    }
-    .hidden {
-      display: none;
-    }
-    .post {
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Mini Blog UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        input,
+        textarea,
+        button {
+            display: block;
+            margin: 8px 0;
+            width: 100%;
+            padding: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .post {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
+
 <body>
 
-  <!-- LOGIN -->
-  <section id="loginSection">
-    <h2>🔐 Giriş Yap</h2>
-    <input id="username" placeholder="Username" />
-    <input id="password" placeholder="Password" type="password" />
-    <button onclick="login()">Login</button>
-    <p id="loginError" style="color:red;"></p>
-  </section>
+    <!-- LOGIN -->
+    <section id="loginSection">
+        <h2>🔐 Giriş Yap</h2>
+        <input id="username" placeholder="Username" />
+        <input id="password" placeholder="Password" type="password" />
+        <button onclick="login()">Login</button>
+        <p id="loginError" style="color:red;"></p>
+        <button onclick="register()">Kayıt Ol</button>
+        <p id="authMessage"></p>
+    </section>
 
-  <!-- POSTS -->
-  <section id="postsSection" class="hidden">
-    <h2>📝 Postlar</h2>
+    <!-- POSTS -->
+    <section id="postsSection" class="hidden">
+        <h2>📝 Postlar</h2>
+        <h3>Yeni Post</h3>
+        <input id="title" placeholder="Başlık" />
+        <textarea id="content" placeholder="İçerik"></textarea>
+        <button onclick="addPost()">Post Ekle</button>
+        <h3>Post Listesi</h3>
+        <div id="postsList"></div>
+        <button onclick="logout()">Çıkış Yap</button>
+    </section>
 
-    <h3>Yeni Post</h3>
-    <input id="title" placeholder="Başlık" />
-    <textarea id="content" placeholder="İçerik"></textarea>
-    <button onclick="addPost()">Post Ekle</button>
+    <script>
+        let token = "";
+        const API_URL = "http://localhost:5006";
 
-    <h3>Post Listesi</h3>
-    <div id="postsList"></div>
-  </section>
+        async function login() {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: username.value,
+                    password: password.value
+                })
+            });
 
-  <script>
-    let token = "";
-    const API_URL = "http://localhost:5004";
+            if (!res.ok) {
+                loginError.textContent = "Giriş başarısız";
+                return;
+            }
 
-    async function login() {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: username.value,
-          password: password.value
-        })
-      });
+            const data = await res.json();
+            token = data.token;
 
-      if (!res.ok) {
-        loginError.textContent = "Giriş başarısız";
-        return;
-      }
+            loginSection.classList.add("hidden");
+            postsSection.classList.remove("hidden");
 
-      const data = await res.json();
-      token = data.token;
-
-      loginSection.classList.add("hidden");
-      postsSection.classList.remove("hidden");
-
-      getPosts();
-    }
-
-    async function getPosts() {
-      const res = await fetch(`${API_URL}/posts`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+            getPosts();
         }
-      });
+        async function getPosts() {
+            const res = await fetch(`${API_URL}/posts`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
 
-      const result = await res.json();
-      postsList.innerHTML = "";
+            const result = await res.json();
+            postsList.innerHTML = "";
 
-      result.data.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "post";
-        div.innerHTML = `<strong>${p.title}</strong><p>${p.content}</p>`;
-        postsList.appendChild(div);
-      });
-    }
+            result.data.forEach(p => {
+                const div = document.createElement("div");
+                div.className = "post";
 
-    async function addPost() {
-      await fetch(`${API_URL}/posts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: title.value,
-          content: content.value
-        })
-      });
+                div.innerHTML = `<strong>${p.title}</strong> <p>${p.content}</p> <button onclick="deletePost(${p.id})">Sil</button>`;
 
-      title.value = "";
-      content.value = "";
+                postsList.appendChild(div);
+            });
+        }
 
-      getPosts();
-    }
-  </script>
+        async function deletePost(id) {
+            await fetch(`${API_URL}/posts/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            getPosts();
+        }
+
+        async function addPost() {
+            await fetch(`${API_URL}/posts`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: title.value,
+                    content: content.value
+                })
+            });
+
+            title.value = "";
+            content.value = "";
+
+            getPosts();
+        }
+        function logout() {
+            token = "";
+
+            postsSection.classList.add("hidden");
+            loginSection.classList.remove("hidden");
+
+            authMessage.textContent = "";
+        }
+
+
+
+        async function register() {
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: username.value,
+                    password: password.value
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                registerMsg.style.color = "green";
+                registerMsg.textContent = "Kayıt başarılı, giriş yapabilirsin.";
+            } else {
+                registerMsg.style.color = "red";
+                registerMsg.textContent = data.message;
+            }
+        }
+
+    </script>
 
 </body>
+
 </html>

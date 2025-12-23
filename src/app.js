@@ -1,18 +1,19 @@
 import express from 'express';
+import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import postRoutes from './routes/post.routes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 
-// Middleware
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Test endpoint
-app.get('/', (req, res) => {
-  res.send('Secure Cloud Blog API çalışıyor 🚀');
-});
-
-// Routes
 app.use('/auth', authRoutes);
 app.use('/posts', postRoutes);
 

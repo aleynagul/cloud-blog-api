@@ -3,10 +3,10 @@ import app from './app.js';
 
 function startServer(port) {
   const server = http.createServer(app);
-
-  server.listen(port, () => {
-    console.log(`Server ${port} portunda çalışıyor`);
-  });
+  
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Server ${port} portunda çalışıyor`);
+});
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

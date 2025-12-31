@@ -41,3 +41,8 @@ Post endpoint’lerinde Redis cache kullanıldı
 Cache ve auth işlemleri service ve middleware yapılarıyla ayrıldı
 Amaç, Redis ve JWT kullanımını uygulamalı olarak öğrenmek ve
 basit ama gerçekçi bir backend mimarisi kurmaktı.
+
+> Not: Proje dosya tabanlı veri (JSON) kullandığı için local ve production ortamları birbirinden bağımsız çalışmaktadır. 
+Bu nedenle localde oluşturulan kullanıcılar ve postlar, sunucu üzerindeki verilerle ortak değildir. 
+Proje AWS üzerinde bir sunucu ortamında çalıştırılarak test edilmiştir.
+

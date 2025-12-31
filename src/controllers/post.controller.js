@@ -4,24 +4,28 @@ import {
   updatePost,
   deletePost,
 } from "../data/posts.data.js";
-import redisClient from "../config/redis.js";
+
+import {
+  getCache,
+  setCache,
+  deleteCache,
+} from "../services/cache.service.js";
 
 export const getAllPostsController = async (req, res) => {
   try {
-    const cacheKey = "posts:all";
+    const username = req.user.username;
+    const cacheKey = `posts:user:${username}`;
 
-    const cached = await redisClient.get(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
-      return res.json(JSON.parse(cached));
+      return res.json(cached);
     }
 
-    const posts = getAllPosts();
-
-    await redisClient.setEx(
-      cacheKey,
-      120,
-      JSON.stringify(posts)
+    const posts = getAllPosts().filter(
+      p => p.owner === username
     );
+
+    await setCache(cacheKey, posts, 120);
 
     res.json(posts);
   } catch (error) {
@@ -29,29 +33,26 @@ export const getAllPostsController = async (req, res) => {
   }
 };
 
-
 export const getPostByIdController = async (req, res) => {
   try {
     const { id } = req.params;
-    const cacheKey = `posts:id:${id}`;
+    const username = req.user.username;
 
-    const cached = await redisClient.get(cacheKey);
+    const cacheKey = `posts:id:${id}:${username}`;
+    const cached = await getCache(cacheKey);
     if (cached) {
-      return res.json(JSON.parse(cached));
+      return res.json(cached);
     }
 
-    const posts = getAllPosts();
-    const post = posts.find(p => String(p.id) === String(id));
+    const post = getAllPosts().find(
+      p => String(p.id) === String(id) && p.owner === username
+    );
 
     if (!post) {
       return res.status(404).json({ message: "Post bulunamadı" });
     }
 
-    await redisClient.setEx(
-      cacheKey,
-      300,
-      JSON.stringify(post)
-    );
+    await setCache(cacheKey, post, 120);
 
     res.json(post);
   } catch (error) {
@@ -59,9 +60,11 @@ export const getPostByIdController = async (req, res) => {
   }
 };
 
+
 export const createPostController = async (req, res) => {
   try {
     const { title, content } = req.body;
+    const username = req.user.username;
 
     if (!title || !content) {
       return res.status(400).json({ message: "title ve content zorunlu" });
@@ -71,11 +74,12 @@ export const createPostController = async (req, res) => {
       id: Date.now().toString(),
       title,
       content,
+      owner: username,
     };
 
     addPost(newPost);
 
-    await redisClient.del("posts:all");
+    await deleteCache(`posts:user:${username}`);
 
     res.status(201).json(newPost);
   } catch (error) {
@@ -85,15 +89,17 @@ export const createPostController = async (req, res) => {
 
 export const updatePostController = async (req, res) => {
   try {
+    const username = req.user.username;
     const updatedPost = {
       ...req.body,
       id: req.params.id,
+      owner: username,
     };
 
     updatePost(updatedPost);
 
-    await redisClient.del("posts:all");
-    await redisClient.del(`posts:id:${req.params.id}`);
+    await deleteCache(`posts:user:${username}`);
+    await deleteCache(`posts:id:${req.params.id}:${username}`);
 
     res.json(updatedPost);
   } catch (error) {
@@ -101,15 +107,15 @@ export const updatePostController = async (req, res) => {
   }
 };
 
-
 export const deletePostController = async (req, res) => {
   try {
+    const username = req.user.username;
     const { id } = req.params;
 
     deletePost(id);
 
-    await redisClient.del("posts:all");
-    await redisClient.del(`posts:id:${id}`);
+    await deleteCache(`posts:user:${username}`);
+    await deleteCache(`posts:id:${id}:${username}`);
 
     res.status(204).send();
   } catch (error) {

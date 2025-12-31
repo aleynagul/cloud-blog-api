@@ -1,30 +1,21 @@
-const cache = new Map();
-const timestamps = new Map();
+import redisClient from "../config/redis.js";
 
-const DEFAULT_TTL = 60 * 1000; 
+//cache'den geri getirme
+export const getCache = async (key) => {
+  const data = await redisClient.get(key);
+  return data ? JSON.parse(data) : null;
+};
 
-export function getCache(key) {
-  const cachedValue = cache.get(key);
-  const cachedTime = timestamps.get(key);
+//cache'ye veri yazma
+export const setCache = async (key, value, ttl = 120) => {
+  await redisClient.setEx(
+    key,
+    ttl,
+    JSON.stringify(value)
+  );
+};
 
-  if (!cachedValue || !cachedTime) return null;
-
-  const isExpired = Date.now() - cachedTime > DEFAULT_TTL;
-  if (isExpired) {
-    cache.delete(key);
-    timestamps.delete(key);
-    return null;
-  }
-
-  return cachedValue;
-}
-
-export function setCache(key, value) {
-  cache.set(key, value);
-  timestamps.set(key, Date.now());
-}
-
-export function clearCache(key) {
-  cache.delete(key);
-  timestamps.delete(key);
-}
+//cache'e temizleme
+export const deleteCache = async (key) => {
+  await redisClient.del(key);
+};

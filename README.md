@@ -23,4 +23,21 @@ Kullanıcı girişi yapıldıktan sonra post ekleme ve postları listeleme işle
 ---
 
 ## Proje Yapısı
+src/
+├─ controllers/
+├─ routes/
+├─ middleware/
+├─ services/
+├─ data/
+├─ config/
+├─ app.js
+└─ server.js
 
+## Kısa Açıklama
+Bu projede:
+Auth işlemleri JWT ile yapıldı
+Logout sonrası token’lar Redis’te blacklist’e alındı
+Post endpoint’lerinde Redis cache kullanıldı
+Cache ve auth işlemleri service ve middleware yapılarıyla ayrıldı
+Amaç, Redis ve JWT kullanımını uygulamalı olarak öğrenmek ve
+basit ama gerçekçi bir backend mimarisi kurmaktı.

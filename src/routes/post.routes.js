@@ -7,11 +7,15 @@ import {
   deletePostController,
 } from "../controllers/post.controller.js";
 
+import { authMiddleware } from "../middleware/auth.middleware.js";
+
 const router = express.Router();
 
-router.get("/", getAllPostsController);
-router.get("/:id", getPostByIdController);
-router.post("/", createPostController);
-router.put("/:id", updatePostController);
-router.delete("/:id", deletePostController);
+router.get("/", authMiddleware, getAllPostsController);
+router.get("/:id", authMiddleware, getPostByIdController);
+
+router.post("/", authMiddleware, createPostController);
+router.put("/:id", authMiddleware, updatePostController);
+router.delete("/:id", authMiddleware, deletePostController);
+
 export default router;
